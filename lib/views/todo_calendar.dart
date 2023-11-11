@@ -14,7 +14,7 @@ class ToDoCalendar extends StatefulWidget {
 }
 
 class _ToDoCalendarState extends State<ToDoCalendar> {
-  double draggableLinePosition = 700.0;
+  double draggableLinePosition = 700.0;double draggableContainerPosition = 0.0;
   String selectedMonth = "December";
   int selectedIndex = 0;
   final kToday = DateTime.now();
@@ -22,9 +22,11 @@ class _ToDoCalendarState extends State<ToDoCalendar> {
       DateTime.now().year, DateTime.now().month - 3, DateTime.now().day);
   final kLastDay = DateTime(
       DateTime.now().year, DateTime.now().month + 3, DateTime.now().day);
-  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  bool isExpanded = false;
+  double initialPosition = 0.0;
+  double dragDistanceThreshold = 50.0;
 
   @override
   Widget build(BuildContext context) {
@@ -120,48 +122,58 @@ class _ToDoCalendarState extends State<ToDoCalendar> {
                     ],
                   ),
                 ),
-                Container(
-                  height: 108.0,
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                  decoration: BoxDecoration(
-                    color: Color.fromRGBO(245, 245, 245, 1),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(25.0),
-                      bottomRight: Radius.circular(25.0),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          scrollDirection: Axis.horizontal,
-                          itemCount: days.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            return InkWell(
-                              onTap: () {
-                                setState(() {
-                                  selectedIndex = index;
-                                });
-                              },
-                              child: CalendarDates(
-                                day: days[index],
-                                date: dates[index],
-                                isSelected: index == selectedIndex,
-                              ),
-                            );
-                          },
-                        ),
+                GestureDetector(
+                  onVerticalDragUpdate: (details) {
+                    if (details.primaryDelta! > 0) {
+                      setState(() {
+                        draggableContainerPosition += details.primaryDelta!;
+                      });
+                    } else {
+                      if (draggableContainerPosition > 0) {
+                        setState(() {
+                          draggableContainerPosition += details.primaryDelta!;
+                        });
+                      }
+                    }
+                  },
+                  onVerticalDragEnd: (details) {
+                    if (details.primaryVelocity! > 0) {
+                      if (draggableContainerPosition > dragDistanceThreshold) {
+                        setState(() {
+                          isExpanded = true;
+                        });
+                      }
+                    } else {
+                      if (draggableContainerPosition < dragDistanceThreshold) {
+                        setState(() {
+                          isExpanded = false;
+                        });
+                      }
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 200),
+                    height: isExpanded ? 300.0 : 108.0,
+                    padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                    decoration: BoxDecoration(
+                      color: Color.fromRGBO(245, 245, 245, 1),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(25.0),
+                        bottomRight: Radius.circular(25.0),
                       ),
-                      Center(
-                        child: Container(
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(child: _calendarTable()),
+                        Container(
+                          decoration: BoxDecoration(
+                              color: Color.fromRGBO(176, 176, 176, 1),
+                              borderRadius: BorderRadius.circular(4)),
                           width: 30.0,
                           height: 4.0,
-                          color: Color.fromRGBO(176, 176, 176, 1),
                         ),
-                      )
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -388,32 +400,42 @@ class _ToDoCalendarState extends State<ToDoCalendar> {
 
   Widget _calendarTable() {
     return TableCalendar(
+      shouldFillViewport: true,
+      rowHeight: 44,
       headerVisible: false,
       firstDay: kFirstDay,
       lastDay: kLastDay,
       focusedDay: _focusedDay,
-      calendarFormat: _calendarFormat,
       selectedDayPredicate: (day) {
-        return isSameDay(_selectedDay, day);
+        return isSameDay(_focusedDay, day);
+      },
+      calendarFormat: isExpanded ? CalendarFormat.month : CalendarFormat.week,
+      onPageChanged: (focusedDay) {
+        setState(() {
+          _focusedDay = focusedDay;
+        });
       },
       onDaySelected: (selectedDay, focusedDay) {
-        if (!isSameDay(_selectedDay, selectedDay)) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-        }
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = focusedDay;
+        });
       },
-      onFormatChanged: (format) {
-        if (_calendarFormat != format) {
-          setState(() {
-            _calendarFormat = format;
-          });
-        }
-      },
-      onPageChanged: (focusedDay) {
-        _focusedDay = focusedDay;
-      },
+      calendarStyle: CalendarStyle(
+        outsideDaysVisible: false,
+        selectedDecoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.globalBlue,
+        ),
+        outsideTextStyle: calendarDayStyle.copyWith(color: Colors.red),
+        selectedTextStyle: calendarDateStyle.copyWith(color: Colors.white),
+        defaultTextStyle:calendarDateStyle,
+        weekendTextStyle: calendarDateStyle,
+        holidayTextStyle: calendarDateStyle,
+        todayTextStyle: calendarDateStyle,
+        todayDecoration:BoxDecoration() ,
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(weekdayStyle: calendarDayStyle,weekendStyle: calendarDayStyle),
     );
   }
 

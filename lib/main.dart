@@ -1,3 +1,4 @@
+import 'package:booking_calendar/views/charts_screen.dart';
 import 'package:booking_calendar/views/todo_calendar.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Calendar',
-      home: const ToDoCalendar(),
+      home:  LineChartSample8(),
     );
   }
 }

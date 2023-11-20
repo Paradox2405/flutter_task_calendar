@@ -407,7 +407,7 @@ class _ToDoCalendarState extends State<ToDoCalendar> {
       lastDay: kLastDay,
       focusedDay: _focusedDay,
       selectedDayPredicate: (day) {
-        return isSameDay(_focusedDay, day);
+        return isSameDay(_selectedDay, day);
       },
       calendarFormat: isExpanded ? CalendarFormat.month : CalendarFormat.week,
       onPageChanged: (focusedDay) {
@@ -427,7 +427,7 @@ class _ToDoCalendarState extends State<ToDoCalendar> {
           shape: BoxShape.circle,
           color: AppColors.globalBlue,
         ),
-        outsideTextStyle: calendarDayStyle.copyWith(color: Colors.red),
+        outsideTextStyle: calendarDateStyle,
         selectedTextStyle: calendarDateStyle.copyWith(color: Colors.white),
         defaultTextStyle:calendarDateStyle,
         weekendTextStyle: calendarDateStyle,
